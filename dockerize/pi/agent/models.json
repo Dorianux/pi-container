@@ -17,7 +17,8 @@
                 },
                 {
                     "id": "deepseek/deepseek-r1-0528-qwen3-8b",
-                    "name": "LM Studio: Deepseek R1 0528 Qwen3 8B"
+                    "name": "LM Studio: Deepseek R1 0528 Qwen3 8B",
+                    "reasoning": true
                 },
                 {
                     "id": "google/gemma-3-12b",
@@ -25,11 +26,13 @@
                 },
                 {
                     "id": "qwen/qwen3-14b",
-                    "name": "LM Studio: Qwen3 14B"
+                    "name": "LM Studio: Qwen3 14B",
+                    "reasoning": true
                 },
                 {
                     "id": "openai/gpt-oss-20b",
-                    "name": "LM Studio: GPT OSS 20B"
+                    "name": "LM Studio: GPT OSS 20B",
+                    "reasoning": true
                 },
                 {
                     "id": "mistralai/devstral-small-2-2512",
