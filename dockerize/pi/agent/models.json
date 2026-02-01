@@ -1,0 +1,41 @@
+{
+    "providers": {
+        "ollama": {
+            "baseUrl": "http://localhost:11434/v1",
+            "api": "openai-completions",
+            "apiKey": "ollama",
+            "models": []
+        },
+        "lmstudio": {
+            "baseUrl": "http://localhost:11435/v1",
+            "api": "openai-completions",
+            "apiKey": "lmstudio",
+            "models": [
+                {
+                    "id": "google/gemma-3-4b",
+                    "name": "LM Studio: Gemma 3 4B"
+                },
+                {
+                    "id": "deepseek/deepseek-r1-0528-qwen3-8b",
+                    "name": "LM Studio: Deepseek R1 0528 Qwen3 8B"
+                },
+                {
+                    "id": "google/gemma-3-12b",
+                    "name": "LM Studio: Gemma 3 12B"
+                },
+                {
+                    "id": "qwen/qwen3-14b",
+                    "name": "LM Studio: Qwen3 14B"
+                },
+                {
+                    "id": "openai/gpt-oss-20b",
+                    "name": "LM Studio: GPT OSS 20B"
+                },
+                {
+                    "id": "mistralai/devstral-small-2-2512",
+                    "name": "LM Studio: Devstral Small 2 2512"
+                }
+            ]
+        }
+    }
+}
