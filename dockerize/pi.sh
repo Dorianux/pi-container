@@ -10,4 +10,4 @@ docker run --rm -it \
   -v "$SCRIPT_DIR/pi":/home/pi/.pi \
   -w /workspace \
   --env-file "$SCRIPT_DIR/.env" \
-  pi-coding-agent
+  pi-coding-agent "${@}"
