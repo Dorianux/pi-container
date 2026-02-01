@@ -1,0 +1,19 @@
+FROM node:25-bookworm-slim
+
+# Create user (Debian syntax)
+RUN groupadd -r pi && useradd -r -g pi -m -d /home/pi pi
+
+# Install pi coding agent (as root)
+RUN npm install -g @mariozechner/pi-coding-agent && \
+    npm cache clean --force
+
+# Set up workspace
+WORKDIR /workspace
+ENV HOME=/home/pi
+
+# Switch to non-root user
+USER pi
+
+# Entrypoint: pass args through to pi
+ENTRYPOINT ["pi"]
+
