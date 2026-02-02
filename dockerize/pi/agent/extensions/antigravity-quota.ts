@@ -96,8 +96,8 @@ async function fetchQuota() {
 }
 
 export default function (pi: ExtensionAPI) {
-  // Register /quota command
-  pi.registerCommand("quota", {
+  // Register /quota-antigravity command
+  pi.registerCommand("quota-antigravity", {
     description: "Show Antigravity usage limits and quotas",
     handler: async (_args, ctx) => {
       try {
