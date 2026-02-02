@@ -3,9 +3,32 @@ import { Type } from "@sinclair/typebox";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
+import { execSync } from "node:child_process";
 
 const AUTH_PATH = path.join(os.homedir(), ".pi", "agent", "auth.json");
 const BASE_URL = "https://cloudcode-pa.googleapis.com";
+const LOG_DIR = path.join(process.cwd(), "dockerize", "pi", "agent", "sessions", "logs");
+
+function logAndCommitQuota(fullJson: string) {
+  try {
+    if (!fs.existsSync(LOG_DIR)) {
+      fs.mkdirSync(LOG_DIR, { recursive: true });
+    }
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `${timestamp}.json`;
+    const logPath = path.join(LOG_DIR, filename);
+    fs.writeFileSync(logPath, fullJson, "utf8");
+
+    try {
+      execSync(`git add -f "${logPath}"`, { stdio: "ignore" });
+      execSync(`git commit -m "chore(quota): log current quota" -m "Timestamp: ${timestamp}"`, { stdio: "ignore" });
+    } catch (gitError) {
+      // Ignore git errors (e.g. not a repo, no changes)
+    }
+  } catch (logError) {
+    // Ignore logging errors to not break the main functionality
+  }
+}
 
 interface QuotaInfo {
   remainingFraction?: number;
@@ -103,6 +126,7 @@ export default function (pi: ExtensionAPI) {
       try {
         ctx.ui.notify("Fetching Antigravity quota...", "info");
         const { loadData, modelsData } = await fetchQuota();
+        logAndCommitQuota(JSON.stringify({ loadData, modelsData }, null, 2));
 
         ctx.ui.setWidget(
           "antigravity-quota",
@@ -195,6 +219,8 @@ export default function (pi: ExtensionAPI) {
         const { loadData, modelsData } = await fetchQuota();
         const fullJson = JSON.stringify({ loadData, modelsData }, null, 2);
 
+        logAndCommitQuota(fullJson);
+
         if (args.filename) {
           fs.writeFileSync(args.filename, fullJson, "utf8");
           ctx.ui.notify(`Quota JSON written to ${args.filename}`, "info");
@@ -218,11 +244,13 @@ export default function (pi: ExtensionAPI) {
     async execute() {
       try {
         const { loadData, modelsData } = await fetchQuota();
+        const fullJson = JSON.stringify({ loadData, modelsData }, null, 2);
+        logAndCommitQuota(fullJson);
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ loadData, modelsData }, null, 2),
+              text: fullJson,
             },
           ],
           details: { loadData, modelsData },
