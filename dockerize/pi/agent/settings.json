@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.51.0",
-  "theme": "light",
   "defaultProvider": "lmstudio",
   "defaultModel": "openai/gpt-oss-20b",
+  "theme": "nightowl",
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": true,
   "shellPath": "/bin/zsh",
