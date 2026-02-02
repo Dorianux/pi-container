@@ -23,6 +23,7 @@ interface QuotaSnapshot {
 interface CopilotUserResponse {
   copilot_plan: string;
   sku: string;
+  access_type_sku?: string;
   quota_reset_date_utc: string;
   quota_snapshots?: Record<string, QuotaSnapshot>;
 }
@@ -71,6 +72,9 @@ export default function (pi: ExtensionAPI) {
             lines.push(theme.fg("accent", theme.bold("GitHub Copilot Quotas:")));
             lines.push(theme.fg("border", "========================="));
             lines.push(`Plan: ${theme.fg("success", data.copilot_plan)}`);
+            if (data.access_type_sku) {
+              lines.push(`SKU:  ${theme.fg("success", data.access_type_sku)}`);
+            }
 
             if (data.quota_snapshots) {
               for (const [id, snapshot] of Object.entries(data.quota_snapshots)) {
