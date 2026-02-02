@@ -11,6 +11,12 @@ Repo to play with [[https://github.com/badlogic/pi-mono][pi]] and [[https://gith
 *** [[file:dockerize][dockerize]]
 Dockerfiles and scripts to containerize the =pi= coding agent.
 
+**** Helper Commands
+- =./build.sh=: Build the docker image.
+- =./pi.sh=: Run the agent in the current directory.
+- =./pi.sh --install=: Install a =pi= alias in =~/.zshrc.local=.
+- =./pi.sh --update=: Rebuild the docker image.
+
 **** Extensions
 - =/quota=: Show Antigravity usage limits and quotas.
 
