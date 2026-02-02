@@ -11,6 +11,9 @@ Repo to play with [[https://github.com/badlogic/pi-mono][pi]] and [[https://gith
 *** [[file:dockerize][dockerize]]
 Dockerfiles and scripts to containerize the =pi= coding agent.
 
+**** Extensions
+- =/quota=: Show Antigravity usage limits and quotas.
+
 ** Pi-generated experiments
 
 *** [[https://github.com/bot2904/graz-transit][graz-transit]]
