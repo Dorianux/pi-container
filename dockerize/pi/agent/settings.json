@@ -5,7 +5,8 @@
   "defaultModel": "openai/gpt-oss-20b",
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": true,
-  "shellCommandPrefix": "shopt -s expand_aliases\neval \"$(grep '^alias ' ~/.zshrc)\"",
+  "shellPath": "/bin/zsh",
+  "shellCommandPrefix": "setopt aliases\nsource ~/.zshrc",
   "images": {
     "autoResize": true
   },

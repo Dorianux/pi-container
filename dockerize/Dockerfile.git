@@ -41,6 +41,9 @@ RUN npm install -g /pi-coding-agent.tgz && rm /pi-coding-agent.tgz
 WORKDIR /workspace
 ENV HOME=/home/pi
 
+# Change default shell to zsh for root and pi user
+RUN chsh -s /bin/zsh && chsh -s /bin/zsh pi
+
 # Switch to non-root user
 USER pi
 RUN wget -O /home/pi/.zshrc https://grml.org/console/zshrc && wget -O /home/pi/.zshrc.local https://grml.org/console/zshrc.local
