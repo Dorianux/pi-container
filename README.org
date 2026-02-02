@@ -23,6 +23,9 @@ The following environment variables can be configured in =dockerize/.env= (see =
 - =./pi.sh --install=: Install a =pi= alias in =~/.zshrc.local=.
 - =./pi.sh --update=: Rebuild the docker image.
 
+**** Prompt Templates
+- =/commit=: Automatically stage and commit changes with conventional commit messages.
+
 **** Extensions
 - =/quota=: Show Antigravity usage limits and quotas.
 
