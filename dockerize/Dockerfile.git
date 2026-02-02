@@ -32,8 +32,10 @@ RUN apt-get update && apt-get install -y zsh git python3 wget curl jq && \
     apt-get update && apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# Create user
-RUN groupadd -r pi && useradd -r -g pi -m -d /home/pi pi
+# Create user; matching UID/GID of local user
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g $GID -r pi && useradd -r -u $UID -g $GID -m -d /home/pi pi
 
 # Install the tarball globally in the final stage
 # This ensures all dependencies are correctly handled and binaries are in the PATH
