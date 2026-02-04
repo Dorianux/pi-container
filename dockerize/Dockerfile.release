@@ -6,7 +6,7 @@ ARG GID=1000
 RUN groupadd -g $GID -r pi && useradd -r -u $UID -g $GID -m -d /home/pi pi
 
 # Install stuff
-RUN apt-get update && apt-get install -y zsh git wget curl jq tree 
+RUN apt-get update && apt-get install -y zsh git wget curl jq tree file
 
 # Install python stuff
 ENV UV_PYTHON_INSTALL_DIR=/usr/local/python
