@@ -1,9 +1,20 @@
 FROM node:current-trixie-slim
 
 # Create user (Debian syntax); matching UID/GID of local user
-ARG UID=1000
-ARG GID=1000
-RUN groupadd -g $GID -r pi && useradd -r -u $UID -g $GID -m -d /home/pi pi
+ARG UID
+ARG GID
+RUN if [ -n "$UID" ] && [ -n "$GID" ]; then \
+        if getent group "$GID" >/dev/null; then \
+            gname=$(getent group "$GID" | cut -d: -f1); \
+            useradd -r -u "$UID" -g "$gname" -m -d /home/pi pi; \
+        else \
+            groupadd -g "$GID" pi && \
+            useradd -r -u "$UID" -g pi -m -d /home/pi pi; \
+        fi; \
+    else \
+        groupadd -r pi && \
+        useradd -r -g pi -m -d /home/pi pi; \
+    fi
 
 # Install stuff
 RUN apt-get update && apt-get install -y zsh git wget curl jq tree file
