@@ -33,11 +33,10 @@ jobs:
 
       - name: Test build.sh
         run: |
-          cd dockerize
           ./build.sh
 
       - name: Test pi.sh --update
         run: |
           # Create an empty .env file to avoid info message noise
-          touch dockerize/.env
-          ./dockerize/pi.sh --update
+          touch .env
+          ./pi.sh --update

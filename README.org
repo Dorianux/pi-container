@@ -15,15 +15,15 @@ Includes various helpers and opinionated customizations.
    cd dockerized-pi
    #+end_src
 
-2. *Configure Environment (Optional)*: Copy =dockerize/.env.template= to =dockerize/.env= and fill in your configuration.
+2. *Configure Environment (Optional)*: Copy =.env.template= to =.env= and fill in your configuration.
    #+begin_src bash
-   cp dockerize/.env.template dockerize/.env
+   cp .env.template .env
    #+end_src
    /Note: This is optional. You can also log in to model providers directly within the agent using the =/login= command./
 
 3. *Build the Image*: Run the build script to create/update the =pi-coding-agent= Docker image.
    #+begin_src bash
-   cd dockerize && ./build.sh
+   ./build.sh
    #+end_src
 
 4. *(Optional) Install Zsh Aliases*: Install the =pi=, =pic=, and =picommit= aliases for easy access from any directory.
@@ -34,7 +34,7 @@ Includes various helpers and opinionated customizations.
 
 ** Environment Variables
 
-The following environment variables can be configured in =dockerize/.env= (see =dockerize/.env.template=):
+The following environment variables can be configured in =.env= (see =.env.template=):
 - =BOT_GH_TOKEN=: GitHub personal access token (for =gh= CLI authentication).
 - =BOT_SENTRY_TOKEN=: Sentry auth token (for =sentry-cli= authentication). Get one at [[https://turing-6b.sentry.io/settings/account/api/auth-tokens/][Sentry Personal Tokens]].
 - =BOT_GIT_NAME=: Git user name (for changes done in the container/by pi).
@@ -44,11 +44,11 @@ The following environment variables can be configured in =dockerize/.env= (see =
 - =GOOGLE_GENERATIVE_AI_API_KEY=: Google Generative AI API key (Gemini).
 - =PI_CACHE_RETENTION=: Cache retention period (e.g., =7d=).
 
-** Dockerize Scripts (run from =dockerize/=, or use =pi= alias)
+** Dockerize Scripts (use =pi= alias or run from repo root)
 
 - =./pi.sh --install=: Install =pi=, =pic=, and =picommit= aliases.
 - =./pi.sh --update=: Update the pi agent to the latest version and rebuild the image.
-- =./pi.sh --sessions=: List past sessions stored in =dockerize/pi/agent/sessions=.
+- =./pi.sh --sessions=: List past sessions stored in =pi/agent/sessions=.
 - =./pi.sh -r= or =--resume=: Select and resume a past session.
 - =./pi.sh --ro= or =--readonly=: Mount the workspace in read-only mode.
 - =./pi.sh <args>=: Run =pi= with the given arguments inside the container (see =./pi.sh --help=).
