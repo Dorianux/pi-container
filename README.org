@@ -20,18 +20,23 @@ The following environment variables can be configured in =dockerize/.env= (see =
 - =BOT_SENTRY_TOKEN=: Sentry auth token (for =sentry-cli= authentication). Get one at [[https://turing-6b.sentry.io/settings/account/api/auth-tokens/][Sentry Personal Tokens]].
 - =BOT_GIT_NAME=: Git user name (for changes done in the container/by pi).
 - =BOT_GIT_EMAIL=: Git user email (for changes done in the container/by pi).
+- =ANTHROPIC_API_KEY=: Anthropic API key.
+- =OPENAI_API_KEY=: OpenAI API key.
+- =GOOGLE_GENERATIVE_AI_API_KEY=: Google Generative AI API key (Gemini).
+- =PI_CACHE_RETENTION=: Cache retention period (e.g., =7d=).
 
 **** Helper Commands
 - =./build.sh=: Build the docker image (optionally pass a version like =./build.sh 1.0.0=).
 - =./pi.sh --install=: Install =pi=, =pic=, and =picommit= aliases in =~/.zshrc.local=.
 - =./pi.sh --update=: Update the agent to the latest version and rebuild the docker image.
+- =./pi.sh --sessions=: List session summaries (number of sessions per project).
+- =./pi.sh --ro= or =--readonly=: Mount the workspace in read-only mode.
 
 **** Pi Alias Commands
 Install using =./pi.sh --install=.
-- =pi=: Run the agent in the current directory (requires =--install=).
-- =pic=: Continue the last session.
+- =pi=: Run the agent in the current directory.
+- =pic=: Continue the last session (=pi --continue=).
 - =picommit=: Automatically stage and commit changes using the =/commit= template.
-- =./pi.sh --sessions=: List session summaries (number of sessions per project).
 
 -----
 
