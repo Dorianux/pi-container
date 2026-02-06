@@ -102,8 +102,15 @@ if [ "$DO_SESSIONS" = true ]; then
         exit 0
     fi
     find "$SESSIONS_DIR" -maxdepth 1 -mindepth 1 -type d | sort | while read -r dir; do
-        count=$(find "$dir" -maxdepth 1 -mindepth 1 | wc -l)
-        echo "$(basename "$dir"): $count sessions"
+        basename_dir=$(basename "$dir")
+        if [ "$basename_dir" == "logs" ]; then
+            continue
+        fi
+        count=$(find "$dir" -maxdepth 1 -mindepth 1 -type f -name "*.jsonl" | wc -l)
+        echo "$basename_dir: $count sessions"
+        find "$dir" -maxdepth 1 -mindepth 1 -type f -name "*.jsonl" -exec basename {} \; | sort -r | head -n 5 | while read -r session; do
+            echo "  - $session"
+        done
     done
     exit 0
 fi
