@@ -2,7 +2,7 @@
 
 /"There are many coding agents dockerizations, but this one is mine."/
 
-Dockerfiles and scripts to containerize the [[https://github.com/badlogic/pi-mono][pi]] coding agent.
+Dockerfiles and scripts to containerize the [[https://github.com/badlogic/pi-mono][pi]] [[https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent][coding agent]].
 Includes various helpers and opinionated customizations.
 
 -----
@@ -15,11 +15,11 @@ Includes various helpers and opinionated customizations.
    cd dockerized-pi
    #+end_src
 
-2. *Configure Environment (Optional)*: Copy ~=env.template~ to ~=env~ and fill in your configuration.
+2. *Configure Environment (Optional)*: Copy ~.env.template~ to ~.env~ and fill in your configuration.
    #+begin_src bash
    cp .env.template .env
    #+end_src
-   /Note: This is optional. You can also log in to model providers directly within the agent using the ~/login~ command./
+   /Note:/ This is optional. You can also log in to model providers directly within the agent using the ~/login~ command.
 
 3. *Build the Image*: Run the build script to create/update the ~pi-coding-agent~ Docker image.
    #+begin_src bash
@@ -30,11 +30,11 @@ Includes various helpers and opinionated customizations.
    #+begin_src bash
    ./pi.sh --install
    #+end_src
-   /Note: This adds aliases to ~~/.zshrc.local~. Ensure this file is sourced in your ~~/.zshrc~./
+   /Note:/ This adds aliases to ~/.zshrc.local~. Ensure this file is sourced in your ~/.zshrc~.
 
 ** Environment Variables
 
-The following environment variables can be configured in ~=env~ (see ~=env.template~):
+The following environment variables can be configured in ~.env~ (see ~.env.template~):
 - ~BOT_GH_TOKEN~: GitHub personal access token (for ~gh~ CLI authentication).
 - ~BOT_SENTRY_TOKEN~: Sentry auth token (for ~sentry-cli~ authentication). Get one at [[https://turing-6b.sentry.io/settings/account/api/auth-tokens/][Sentry Personal Tokens]].
 - ~BOT_GIT_NAME~: Git user name (for changes done in the container/by pi).
