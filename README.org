@@ -40,6 +40,7 @@ The following environment variables can be configured in ~.env~ (see ~.env.templ
 - ~BOT_SENTRY_TOKEN~: Sentry auth token (for ~sentry-cli~ authentication). Get one at [[https://turing-6b.sentry.io/settings/account/api/auth-tokens/][Sentry Personal Tokens]].
 - ~BOT_GIT_NAME~: Git user name (for changes done in the container/by pi).
 - ~BOT_GIT_EMAIL~: Git user email (for changes done in the container/by pi).
+- ~PI_SUDO_PASSWORD~: Password for ~sudo~ inside the container. If not set, a random password is generated and displayed at startup.
 - ~ANTHROPIC_API_KEY~: Anthropic API key.
 - ~OPENAI_API_KEY~: OpenAI API key.
 - ~GEMINI_API_KEY~: Google Gemini API key.
@@ -53,7 +54,6 @@ The following environment variables can be configured in ~.env~ (see ~.env.templ
 - ~./pi.sh --install~: Install ~pi~, ~pic~, and ~picommit~ aliases.
 - ~./pi.sh --update~: Update the pi agent to the latest version and rebuild the image.
 - ~./pi.sh --sessions~: List past sessions stored in ~pi/agent/sessions~.
-- ~./pi.sh -r~ or ~--resume~: Select and resume a past session.
 - ~./pi.sh --ro~ or ~--readonly~: Mount the workspace in read-only mode.
 - ~./pi.sh <args>~: Run ~pi~ with the given arguments inside the container (see ~./pi.sh --help~).
 
@@ -75,6 +75,18 @@ The ~pi.sh~ script automatically detects your project root by searching upwards 
 *** 🐚 Shell Environment
 
 The container uses ~zsh~ with the excellent [[https://grml.org/zsh/][grml configuration]], providing a powerful and interactive shell environment for the agent (and you).
+
+*** 🔐 Sudo Support
+
+The ~pi~ user can gain root privileges via ~sudo~. The password is configurable through the ~PI_SUDO_PASSWORD~ environment variable (set it in ~.env~). If not set, a random 16-character hex password is generated at container startup and printed to the console:
+
+#+begin_example
+==========================================
+ sudo password for pi: a1b2c3d4e5f67890
+==========================================
+#+end_example
+
+This allows the agent (or you, when shelling in) to install packages or perform other root operations as needed.
 
 *** 📝 Prompt Templates
 
