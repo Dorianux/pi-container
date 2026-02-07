@@ -9,8 +9,6 @@ const GOOGLE_BASE_URL = "https://cloudcode-pa.googleapis.com";
 const CHATGPT_BASE_URL = "https://chatgpt.com/backend-api";
 const OPENAI_AUTH_CLAIM = "https://api.openai.com/auth";
 const OPENAI_PROFILE_CLAIM = "https://api.openai.com/profile";
-const INFO_LABEL_WIDTH = 8;
-const METRIC_LABEL_WIDTH = 20;
 
 const COPILOT_HEADERS = {
   "User-Agent": "GitHubCopilotChat/0.35.0",
@@ -72,10 +70,10 @@ interface GoogleLoadCodeAssistResponse {
 }
 
 interface QuotaSnapshot {
-  entitlement: number;
-  remaining: number;
-  percent_remaining: number;
-  unlimited: boolean;
+  entitlement?: number;
+  remaining?: number;
+  percent_remaining?: number;
+  unlimited?: boolean;
 }
 
 interface CopilotUserResponse {
@@ -131,7 +129,11 @@ function decodeJwtPayload(token?: string): Record<string, unknown> | undefined {
 }
 
 function asRecord(v: unknown): Record<string, unknown> | undefined {
-  return v && typeof v === "object" ? (v as Record<string, unknown>) : undefined;
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : undefined;
+}
+
+function normalizeProviderConfig(raw: unknown): AuthProviderConfig | undefined {
+  return asRecord(raw) as AuthProviderConfig | undefined;
 }
 
 async function fetchCopilotQuota(config: AuthProviderConfig): Promise<CopilotUserResponse> {
@@ -334,8 +336,34 @@ type ProviderResult =
   | { provider: string; config: AuthProviderConfig; kind: "error"; error: string }
   | { provider: string; config: AuthProviderConfig; kind: "unsupported" };
 
-function renderGoogleModelLines(lines: string[], theme: any, modelsData?: FetchAvailableModelsResponse) {
-  if (!modelsData?.models) return;
+type QuotaRow = {
+  provider: string;
+  account: string;
+  plan: string;
+  metric: string;
+  value: string;
+  reset: string;
+};
+
+function formatDateUtc(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "unknown";
+  const dateStr = date.toLocaleDateString([], { day: "2-digit", month: "short" });
+  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${dateStr} ${timeStr}`;
+}
+
+function formatEpochUtc(seconds?: number): string {
+  if (!seconds) return "unknown";
+  const date = new Date(seconds * 1000);
+  if (Number.isNaN(date.getTime())) return "unknown";
+  const dateStr = date.toLocaleDateString([], { day: "2-digit", month: "short" });
+  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${dateStr} ${timeStr}`;
+}
+
+function collectGoogleModelRows(provider: string, account: string, plan: string, modelsData?: FetchAvailableModelsResponse): QuotaRow[] {
+  if (!modelsData?.models) return [];
 
   const recommendedIds = new Set(modelsData.agentModelSorts?.[0]?.groups?.flatMap((g) => g.modelIds || []) || []);
 
@@ -349,52 +377,55 @@ function renderGoogleModelLines(lines: string[], theme: any, modelsData?: FetchA
     })
     .sort((a, b) => (a[1].quotaInfo?.remainingFraction ?? 1) - (b[1].quotaInfo?.remainingFraction ?? 1));
 
-  if (relevantModels.length === 0) return;
-
-  const longest = Math.max(METRIC_LABEL_WIDTH, relevantModels.reduce((max, [id]) => Math.max(max, id.length), 12));
-
-  for (const [id, info] of relevantModels) {
-    const remainingVal = info.quotaInfo?.remainingFraction;
-    const remaining = remainingVal !== undefined ? `${(remainingVal * 100).toFixed(1)}%` : "N/A";
-    const resetDate = info.quotaInfo?.resetTime ? new Date(info.quotaInfo.resetTime) : undefined;
-
-    let resetStr = "Unknown";
-    if (resetDate) {
-      const timeStr = resetDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-      const dateStr = resetDate.toLocaleDateString([], { day: "2-digit", month: "short" });
-      resetStr = `${dateStr} ${timeStr}`;
-    }
-
-    let color: "text" | "error" | "warning" = "text";
-    if (info.quotaInfo?.isExhausted || (remainingVal !== undefined && remainingVal < 0.1)) color = "error";
-    else if (remainingVal !== undefined && remainingVal < 0.5) color = "warning";
-
-    lines.push(
-      `${theme.fg("dim", id.padEnd(longest))}: ${theme.fg(color, remaining.padStart(6))}  reset ${theme.fg("dim", resetStr)}`
-    );
-  }
+  return relevantModels.map(([id, info]) => ({
+    provider,
+    account,
+    plan,
+    metric: id,
+    value: info.quotaInfo?.remainingFraction !== undefined ? `${(info.quotaInfo.remainingFraction * 100).toFixed(1)}%` : "N/A",
+    reset: info.quotaInfo?.resetTime ? formatDateUtc(info.quotaInfo.resetTime) : "unknown",
+  }));
 }
 
-function windowLine(theme: any, id: string, window?: CodexRateWindow): string {
-  if (!window || window.usedPercent === undefined) {
-    return `${theme.fg("dim", id.padEnd(METRIC_LABEL_WIDTH))}: ${theme.fg("dim", "n/a")}`;
-  }
-
+function codexWindowFields(window?: CodexRateWindow): { value: string; reset: string } {
+  if (!window || window.usedPercent === undefined) return { value: "n/a", reset: "unknown" };
   const used = Math.max(0, Math.min(100, window.usedPercent));
-  const remaining = `${(100 - used).toFixed(1)}%`;
+  return {
+    value: `${(100 - used).toFixed(1)}% rem`,
+    reset: formatEpochUtc(window.resetAt),
+  };
+}
 
-  let color: "text" | "error" | "warning" = "text";
-  if (remaining === "0.0%") color = "error";
-  else if (used >= 50) color = "warning";
+function truncateCell(value: string, maxWidth: number): string {
+  const normalized = value.replace(/[\r\n\t]+/g, " ").replace(/[\u0000-\u001f\u007f]/g, " ");
+  if (maxWidth <= 0) return "";
+  if (normalized.length <= maxWidth) return normalized;
+  if (maxWidth <= 1) return "…";
+  return `${normalized.slice(0, maxWidth - 1)}…`;
+}
 
-  const resetAt = window.resetAt ? new Date(window.resetAt * 1000) : undefined;
-  const resetStr = resetAt
-    ? resetAt.toLocaleDateString([], { day: "2-digit", month: "short" }) +
-      " " +
-      resetAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
-    : "unknown";
+function renderQuotaTable(lines: string[], theme: any, rows: QuotaRow[]) {
+  const headers = ["Provider", "Account", "Plan", "Metric", "Value", "Reset/Note"] as const;
+  const data = rows.map((r) => [r.provider, r.account, r.plan, r.metric, r.value, r.reset]);
+  const maxColumnWidths = [14, 18, 12, 14, 18, 14] as const;
 
-  return `${theme.fg("dim", id.padEnd(METRIC_LABEL_WIDTH))}: ${theme.fg(color, remaining.padStart(6))} rem, reset ${theme.fg("dim", resetStr)}`;
+  const widths = headers.map((header, index) => {
+    const contentWidth = Math.max(header.length, ...data.map((row) => row[index].length));
+    return Math.min(contentWidth, maxColumnWidths[index]);
+  });
+
+  const separator = `+${widths.map((w) => "-".repeat(w + 2)).join("+")}+`;
+  const renderRow = (cols: string[]) => {
+    const clamped = cols.map((c, i) => truncateCell(c, widths[i]).padEnd(widths[i]));
+    return `| ${clamped.join(" | ")} |`;
+  };
+
+  lines.push(theme.fg("accent", theme.bold("Provider Quotas")));
+  lines.push(theme.fg("border", separator));
+  lines.push(theme.fg("accent", renderRow([...headers])));
+  lines.push(theme.fg("border", separator));
+  for (const row of data) lines.push(renderRow(row));
+  lines.push(theme.fg("border", separator));
 }
 
 export default function (pi: ExtensionAPI) {
@@ -413,7 +444,17 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify("Fetching quotas...", "info");
 
         const providerResults: ProviderResult[] = await Promise.all(
-          providers.map(async ([provider, config]) => {
+          providers.map(async ([provider, rawConfig]) => {
+            const config = normalizeProviderConfig(rawConfig);
+            if (!config) {
+              return {
+                provider,
+                config: {},
+                kind: "error",
+                error: "Invalid provider config in auth.json",
+              };
+            }
+
             try {
               if (provider === "github-copilot") {
                 return { provider, config, kind: "copilot", data: await fetchCopilotQuota(config) };
@@ -458,54 +499,48 @@ export default function (pi: ExtensionAPI) {
           "quota",
           (_tui, theme) => {
             const lines: string[] = [];
-            const info = (label: string, value: string) => {
-              lines.push(`${label.padEnd(INFO_LABEL_WIDTH)}: ${theme.fg("success", value)}`);
-            };
-            const metric = (name: string) => theme.fg("dim", name.padEnd(METRIC_LABEL_WIDTH));
-
-            lines.push(theme.fg("accent", theme.bold("Provider Quotas:")));
-            lines.push(theme.fg("border", "================"));
+            const rows: QuotaRow[] = [];
 
             for (const entry of providerResults) {
-              lines.push("");
-              lines.push(theme.fg("accent", theme.bold(entry.provider)));
-
               if (entry.kind === "copilot") {
                 const data = entry.data;
-                info("Account", data.login || getAccountHint(entry.provider, entry.config));
-                info("Plan", data.copilot_plan || data.sku || "unknown");
+                const account = data.login || getAccountHint(entry.provider, entry.config);
+                const plan = data.copilot_plan || data.sku || "unknown";
+
                 if (data.access_type_sku) {
-                  info("SKU", data.access_type_sku);
+                  rows.push({ provider: entry.provider, account, plan, metric: "sku", value: data.access_type_sku, reset: "-" });
                 }
 
                 if (data.quota_snapshots) {
                   for (const [id, snapshot] of Object.entries(data.quota_snapshots)) {
-                    if (snapshot.unlimited) {
-                      lines.push(`${metric(id)}: ${theme.fg("success", "Unlimited")}`);
-                      continue;
-                    }
+                    const percentRemaining = typeof snapshot.percent_remaining === "number" ? snapshot.percent_remaining : undefined;
+                    const remaining = typeof snapshot.remaining === "number" ? snapshot.remaining : undefined;
+                    const entitlement = typeof snapshot.entitlement === "number" ? snapshot.entitlement : undefined;
 
-                    const remaining = snapshot.percent_remaining.toFixed(1) + "%";
-                    let color: "text" | "error" | "warning" = "text";
-                    if (snapshot.percent_remaining < 10) color = "error";
-                    else if (snapshot.percent_remaining < 50) color = "warning";
+                    const value = snapshot.unlimited
+                      ? "Unlimited"
+                      : percentRemaining !== undefined && remaining !== undefined && entitlement !== undefined
+                      ? `${percentRemaining.toFixed(1)}% (${remaining}/${entitlement})`
+                      : "Partial snapshot data";
 
-                    lines.push(
-                      `${metric(id)}: ${theme.fg(color, remaining.padStart(6))} (${snapshot.remaining}/${snapshot.entitlement})`
-                    );
+                    rows.push({
+                      provider: entry.provider,
+                      account,
+                      plan,
+                      metric: id,
+                      value,
+                      reset: data.quota_reset_date_utc ? formatDateUtc(data.quota_reset_date_utc) : "-",
+                    });
                   }
-                }
-
-                if (data.quota_reset_date_utc) {
-                  const resetDate = new Date(data.quota_reset_date_utc);
-                  const dateStr = resetDate.toLocaleDateString([], { day: "2-digit", month: "short" });
-                  lines.push(`${metric("Next Reset")}: ${dateStr}`);
+                } else {
+                  rows.push({ provider: entry.provider, account, plan, metric: "quota", value: "No snapshot data", reset: "-" });
                 }
                 continue;
               }
 
               if (entry.kind === "antigravity" || entry.kind === "gemini-cli") {
                 const { loadData, modelsData, modelsError } = entry.data;
+                const account = entry.config.email || getAccountHint(entry.provider, entry.config);
                 const plan =
                   loadData.currentTier?.name ||
                   loadData.currentTier?.id ||
@@ -513,18 +548,25 @@ export default function (pi: ExtensionAPI) {
                   loadData.subscriptionPlan ||
                   "unknown";
 
-                info("Account", entry.config.email || getAccountHint(entry.provider, entry.config));
-                info("Plan", plan);
-
                 if (loadData.availablePromptCredits !== undefined) {
-                  lines.push(
-                    `${metric("prompt_credits")}: ${theme.fg("success", String(loadData.availablePromptCredits))}`
-                  );
+                  rows.push({
+                    provider: entry.provider,
+                    account,
+                    plan,
+                    metric: "prompt_credits",
+                    value: String(loadData.availablePromptCredits),
+                    reset: "-",
+                  });
                 }
 
-                renderGoogleModelLines(lines, theme, modelsData);
+                rows.push(...collectGoogleModelRows(entry.provider, account, plan, modelsData));
+
                 if (modelsError) {
-                  lines.push(`${metric("model_quotas")}: ${theme.fg("dim", modelsError)}`);
+                  rows.push({ provider: entry.provider, account, plan, metric: "model_quotas", value: modelsError, reset: "-" });
+                }
+
+                if (loadData.availablePromptCredits === undefined && !modelsData?.models && !modelsError) {
+                  rows.push({ provider: entry.provider, account, plan, metric: "quota", value: "No quota data", reset: "-" });
                 }
                 continue;
               }
@@ -534,38 +576,46 @@ export default function (pi: ExtensionAPI) {
                 const account = emailFromToken || entry.config.email || accountId || getAccountHint(entry.provider, entry.config);
                 const plan = quota.planType || planFromToken || "unknown";
 
-                info("Account", account);
-                info("Plan", plan);
+                const primary = codexWindowFields(quota.primary);
+                rows.push({ provider: entry.provider, account, plan, metric: "codex_primary", value: primary.value, reset: primary.reset });
 
-                lines.push(windowLine(theme, "codex_primary", quota.primary));
-                lines.push(windowLine(theme, "codex_secondary", quota.secondary));
+                const secondary = codexWindowFields(quota.secondary);
+                rows.push({ provider: entry.provider, account, plan, metric: "codex_secondary", value: secondary.value, reset: secondary.reset });
 
                 if (typeof quota.primaryOverSecondaryPercent === "number") {
-                  lines.push(
-                    `${metric("primary_over_secondary")}: ${theme.fg(
-                      "dim",
-                      `${quota.primaryOverSecondaryPercent.toFixed(1)}%`
-                    )}`
-                  );
+                  rows.push({
+                    provider: entry.provider,
+                    account,
+                    plan,
+                    metric: "primary_over_secondary",
+                    value: `${quota.primaryOverSecondaryPercent.toFixed(1)}%`,
+                    reset: "-",
+                  });
                 }
 
                 if (quota.creditsUnlimited) {
-                  lines.push(`${metric("credits")}: ${theme.fg("success", "Unlimited")}`);
+                  rows.push({ provider: entry.provider, account, plan, metric: "credits", value: "Unlimited", reset: "-" });
                 } else if (quota.creditsHasCredits && typeof quota.creditsBalance === "number") {
-                  lines.push(`${metric("credits")}: ${theme.fg("success", quota.creditsBalance.toFixed(2))}`);
+                  rows.push({ provider: entry.provider, account, plan, metric: "credits", value: quota.creditsBalance.toFixed(2), reset: "-" });
                 }
                 continue;
               }
 
-              info("Account", getAccountHint(entry.provider, entry.config));
+              const account = getAccountHint(entry.provider, entry.config);
+              const plan = entry.config.plan || entry.config.subscriptionPlan || "unknown";
               if (entry.kind === "error") {
-                lines.push(`${theme.fg("error", `Failed to fetch quota: ${entry.error}`)}`);
+                rows.push({ provider: entry.provider, account, plan, metric: "error", value: `Failed to fetch quota: ${entry.error}`, reset: "-" });
               } else {
-                const plan = entry.config.plan || entry.config.subscriptionPlan;
-                if (plan) info("Plan", plan);
-                lines.push(theme.fg("dim", "Quota details unavailable for this provider"));
+                rows.push({ provider: entry.provider, account, plan, metric: "quota", value: "Unavailable for this provider", reset: "-" });
               }
             }
+
+            if (rows.length === 0) {
+              rows.push({ provider: "-", account: "-", plan: "-", metric: "quota", value: "No data", reset: "-" });
+            }
+
+            renderQuotaTable(lines, theme, rows);
+            lines.push(theme.fg("dim", "(Auto-closes in 60s)"));
 
             return {
               render: () => lines,
@@ -575,7 +625,8 @@ export default function (pi: ExtensionAPI) {
           { placement: "aboveEditor" }
         );
 
-        setTimeout(() => ctx.ui.setWidget("quota", undefined), 60000);
+        const closeTimer = setTimeout(() => ctx.ui.setWidget("quota", undefined), 60000);
+        closeTimer.unref?.();
       } catch (error) {
         ctx.ui.notify(`Error fetching quotas: ${error instanceof Error ? error.message : String(error)}`, "error");
       }
