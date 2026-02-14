@@ -91,8 +91,10 @@ if [ "$DO_UPDATE" = true ]; then
     cd "$SCRIPT_DIR"
     CURRENT_VERSION=$(docker run --rm pi-coding-agent --version)
     LATEST_VERSION=$(curl -s https://registry.npmjs.org/@mariozechner/pi-coding-agent/latest | jq -r .version)
+    echo "Latest pi version: $LATEST_VERSION"
     if [ "$CURRENT_VERSION" == "$LATEST_VERSION" ]; then
-        echo "Already up to date. Rebuilding anyway ..."
+        echo "Already up to date!"
+        exit 0
     else
         echo "Updating pi to version $LATEST_VERSION ..."
     fi
