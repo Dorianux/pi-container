@@ -1,15 +1,27 @@
 #!/bin/sh
 set -e
 
+SHOW_SUDO_PASSWORD=1
+for arg in "$@"; do
+    case "$arg" in
+        --help|--version)
+            SHOW_SUDO_PASSWORD=0
+            break
+            ;;
+    esac
+done
+
 # Configure sudo password for the pi user
 if [ -n "$PI_SUDO_PASSWORD" ]; then
     echo "pi:$PI_SUDO_PASSWORD" | chpasswd
 else
     PI_SUDO_PASSWORD=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' | head -c 16)
     echo "pi:$PI_SUDO_PASSWORD" | chpasswd
-    echo "=========================================="
-    echo " sudo password for pi: $PI_SUDO_PASSWORD"
-    echo "=========================================="
+    if [ "$SHOW_SUDO_PASSWORD" -eq 1 ]; then
+        echo "=========================================="
+        echo " sudo password for pi: $PI_SUDO_PASSWORD"
+        echo "=========================================="
+    fi
 fi
 unset PI_SUDO_PASSWORD
 
