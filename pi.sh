@@ -56,9 +56,9 @@ set -- "${NEW_ARGS[@]}"
 if [ "$DO_COMMIT" = true ]; then
     MODEL_ARG=""
     if [ -n "$PI_FAST_MODEL" ]; then
-        MODEL_ARG="--provider \"$PI_FAST_PROVIDER\" --model \"$PI_FAST_MODEL\""
+        MODEL_ARG="--provider $PI_FAST_PROVIDER --model $PI_FAST_MODEL"
     fi
-    set -- "/commit --force --user \"$(git config user.name)\" --email \"$(git config user.email)\" $MODEL_ARG"
+    set -- $MODEL_ARG "/commit --force --user \"$(git config user.name)\" --email \"$(git config user.email)\""
 fi
 
 # --install flag
