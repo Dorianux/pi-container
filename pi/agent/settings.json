@@ -1,9 +1,9 @@
 {
-  "lastChangelogVersion": "0.52.7",
+  "lastChangelogVersion": "0.52.12",
   "theme": "light",
-  "defaultProvider": "google-antigravity",
-  "defaultModel": "gemini-3-flash",
-  "defaultThinkingLevel": "medium",
+  "defaultProvider": "kilo-code",
+  "defaultModel": "z-ai/glm-5:free",
+  "defaultThinkingLevel": "high",
   "hideThinkingBlock": true,
   "shellPath": "/bin/zsh",
   "shellCommandPrefix": "setopt aliases\nsource ~/.zshrc",
@@ -27,7 +27,12 @@
     "github-copilot/claude-opus-4.5",
     "google-antigravity/claude-opus-4-5-thinking",
     "github-copilot/claude-opus-4.6",
-    "openai-codex/gpt-5.3-codex"
+    "openai-codex/gpt-5.3-codex",
+    "kilo-code/z-ai/glm-5:free",
+    "kilo-code/openrouter/free",
+    "kilo-code/openai/gpt-oss-120b:free",
+    "kilo-code/minimax/minimax-m2.5:free",
+    "kilo-code/deepseek/deepseek-r1-0528:free"
   ],
   "packages": [
     {
