@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.52.12",
+  "lastChangelogVersion": "0.53.0",
   "theme": "light",
   "defaultProvider": "kilo-code",
   "defaultModel": "z-ai/glm-5:free",
