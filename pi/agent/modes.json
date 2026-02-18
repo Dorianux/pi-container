@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "currentMode": "default",
+  "modes": {
+    "default": {
+      "provider": "kilo-code",
+      "modelId": "z-ai/glm-5:free",
+      "thinkingLevel": "high"
+    },
+    "fast": {
+      "provider": "github-copilot",
+      "modelId": "gemini-3-flash-preview",
+      "thinkingLevel": "medium"
+    }
+  }
+}
