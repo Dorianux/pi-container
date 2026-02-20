@@ -20,6 +20,10 @@ RUN if [ -n "$UID" ] && [ -n "$GID" ]; then \
 # Install stuff
 RUN apt-get update && apt-get install -y zsh git wget curl jq tree file sudo gosu
 
+# dorians
+RUN apt-get install -y cmake golang golang-go golang-src openscad blender htop 
+RUN apt-get install -y xz-utils ca-certificates fontconfig fonts-dejavu-core
+
 # Allow pi user to use sudo with a password
 RUN usermod -aG sudo pi
 
@@ -54,7 +58,19 @@ RUN chsh -s /bin/zsh && chsh -s /bin/zsh pi
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Switch to non-root user for setup
+# dorians typst
+RUN TYPST_VERSION=0.14.2 && \
+    curl -L "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" | \
+    tar -xJ -C /usr/local/bin --strip-components=1 --wildcards '*/typst' && \
+    chmod +x /usr/local/bin/typst
+
+# dorians rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --profile minimal && \
+    . $HOME/.cargo/env && \
+    rm -rf $HOME/.rustup/toolchains/*/share/doc
+
+# Switch to non-root user
 USER pi
 RUN wget -O /home/pi/.zshrc https://grml.org/console/zshrc && wget -O /home/pi/.zshrc.local https://grml.org/console/zshrc.local
 
